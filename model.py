@@ -6,19 +6,20 @@ import torch.nn.functional as F
 class Encoder(nn.Module):
     def __init__(self, height, width, hidden_size, latent_size):
         super().__init__()
-        self.conv1 = nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1)
-        self.pool1 = nn.MaxPool2d(2)
-        self.conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1)
-        self.pool2 = nn.MaxPool2d(2)
-        self.fc1 = nn.Linear(32 * (height // 4) * (width // 4), hidden_size)
+        self.conv1 = nn.Conv2d(1, 16, kernel_size=3)
+        self.conv2 = nn.Conv2d(16, 32, kernel_size=3)
+        self.fc1 = nn.Linear(32 * 24 * 24, 512)
+        self.fc2 = nn.Linear(512, hidden_size)
+
         self.mu = nn.Linear(hidden_size, latent_size)
         self.var = nn.Linear(hidden_size, latent_size)
 
     def forward(self, x):
-        x = F.relu(self.conv1(self.pool1(x)))
-        x = F.relu(self.conv2(self.pool2(x)))
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
         x = torch.flatten(x, 1)
         x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
 
         mu = self.mu(x)
         var = self.var(x)
@@ -32,21 +33,21 @@ class Decoder(nn.Module):
         self.height = height
         self.width = width
         self.fc1 = nn.Linear(latent_size, hidden_size)
-        self.fc2 = nn.Linear(hidden_size, 32 * (height // 4) * (width // 4))
+        self.fc2 = nn.Linear(hidden_size, 512)
+        self.fc3 = nn.Linear(512, 32 * 24 * 24)
 
-        self.conv1 = nn.Conv2d(32, 16, kernel_size=3, stride=1, padding=1)
-        self.up1 = nn.Upsample(scale_factor=2)
-        self.conv2 = nn.Conv2d(16, 1, kernel_size=3, stride=1, padding=1)
-        self.up2 = nn.Upsample(scale_factor=2)
+        self.upconv1 = nn.ConvTranspose2d(32, 16, kernel_size=3)
+        self.upconv2 = nn.ConvTranspose2d(16, 1, kernel_size=3)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = torch.reshape(x, (x.size(0), 32, self.height // 4, self.width // 4))
+        x = F.relu(self.fc3(x))
+        x = torch.reshape(x, (x.size(0), 32, 24, 24))
 
-        x = F.relu(self.conv1(self.up1(x)))
-        x = F.relu(self.conv2(self.up2(x)))
-        return F.sigmoid(x)
+        x = F.relu(self.upconv1(x))
+        x = F.sigmoid(self.upconv2(x))
+        return x
 
 
 class VAE(nn.Module):
