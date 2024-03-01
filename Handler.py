@@ -240,6 +240,6 @@ if __name__ == "__main__":
                       tensorboard_enable=tensorboard_enable)
 
     handler.train_model()
-    handler.train_classifier()
+    handler.train_classifier(vae_model_name)
     handler.test(vae_model_name)
 
