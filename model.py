@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 # class Encoder(nn.Module):
@@ -163,11 +164,7 @@ if __name__ == "__main__":
 
     x = torch.rand(batch_size, c, h, w)
 
-    # model = VAE(hidden_size=hidden_s, latent_size=latent_s)
-    # output, mu, var = model(x)
-    #
-    # print(f"Output Shape {output.shape} Mu Shape {mu.shape} Var Shape {var.shape}")
     model = VAE(hidden_s, latent_s)
     output, mu, std = model(x)
-    print(output.shape)
+    print(f"Output Shape {output.shape} Mu Shape {mu.shape} Var Shape {std.shape}")
 

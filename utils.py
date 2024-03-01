@@ -13,16 +13,20 @@ def load_data(data_type, train_size):
         os.mkdir(os.path.join(os.getcwd(), "data"))
     if data_type == "MNIST":
         train_dataset = datasets.MNIST("./data", train=True, download=True, transform=transform)
-        train_dataset, _ = torch.utils.data.random_split(train_dataset,
-                                                         [train_size, len(train_dataset) - train_size])
+        train_dataset_labeled, train_dataset_unlabeled = torch.utils.data.random_split(train_dataset,
+                                                                                       [train_size,
+                                                                                        len(train_dataset) - train_size]
+                                                                                       )
         test_dataset = datasets.MNIST("./data", train=False, download=True, transform=transform)
-        return train_dataset, test_dataset
+        return train_dataset_labeled, train_dataset_unlabeled, train_dataset, test_dataset
     if data_type == "FashionMNIST":
         train_dataset = datasets.FashionMNIST("./data", train=True, download=True, transform=transform)
-        train_dataset, _ = torch.utils.data.random_split(train_dataset,
-                                                         [train_size, len(train_dataset) - train_size])
+        train_dataset_labeled, train_dataset_unlabeled = torch.utils.data.random_split(train_dataset,
+                                                                                       [train_size,
+                                                                                        len(train_dataset) - train_size]
+                                                                                       )
         test_dataset = datasets.FashionMNIST("./data", train=False, download=True, transform=transform)
-        return train_dataset, test_dataset
+        return train_dataset_labeled, train_dataset_unlabeled, train_dataset, test_dataset
 
 
 def kl_divergence(mu1, std1, mu2, std2):

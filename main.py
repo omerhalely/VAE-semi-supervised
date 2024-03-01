@@ -9,6 +9,28 @@ parser = argparse.ArgumentParser(
 )
 
 parser.add_argument(
+    "--model-type",
+    type=str,
+    help="The model which will be trained (VAE / Classifier). Default - VAE",
+    default="VAE",
+)
+
+parser.add_argument(
+    "--model-name",
+    type=str,
+    help="The name of the saved model. The model will be saved in ./models/model_name. Default - VAE MNIST",
+    default="VAE_MNIST",
+)
+
+parser.add_argument(
+    "--vae-model-name",
+    type=str,
+    help="The name of the VAE model which will convert the image to its latent representation for the classifier "
+         "training process. Default - VAE MNIST",
+    default="VAE_MNIST",
+)
+
+parser.add_argument(
     "--train-size",
     type=int,
     help="The amount of labeled training images which will be used for the training process. Default - 100.",
@@ -18,22 +40,21 @@ parser.add_argument(
 parser.add_argument(
     "--data",
     type=str,
-    help="The amount of labeled training images which will be used for the training process (MNIST/FashionMNIST)."
-         " Default - MNIST",
+    help=" The data which will be used in the training process (MNIST/FashionMNIST). Default - MNIST",
     default="MNIST",
 )
 
 parser.add_argument(
     "--epochs",
     type=int,
-    help="Number of epochs for training. Default - 30",
-    default=30,
+    help="Number of epochs for training. Default - 10",
+    default=5,
 )
 
 parser.add_argument(
     "--batch-size",
     type=int,
-    help="Batch size. Default - 10",
+    help="Batch size. Default - 128",
     default=10,
 )
 
@@ -47,9 +68,16 @@ parser.add_argument(
 
 if __name__ == "__main__":
     args = parser.parse_args()
+    model_type = args.model_type
+    assert model_type in ["VAE", "Classifier"], "model type must be VAE or Classifier."
     train_size = args.train_size
     data_type = args.data
-    model_name = f"VAE_{train_size}_{data_type}"
+    model_name = args.model_name
+    vae_model_name = args.vae_model_name
+    if model_type == "VAE":
+        tensorboard_enable = True
+    else:
+        tensorboard_enable = False
     height = 28
     width = 28
     hidden_size = 256
@@ -70,8 +98,12 @@ if __name__ == "__main__":
                       epochs=epochs,
                       batch_size=batch_size,
                       train_size=train_size,
-                      device=device)
-    if train:
-        handler.train()
+                      device=device,
+                      tensorboard_enable=tensorboard_enable)
+
+    if train and model_type == "VAE":
+        handler.train_model()
+    elif train and model_type == "Classifier":
+        handler.train_classifier(vae_model_name)
     else:
-        handler.test()
+        handler.test(vae_model_name)

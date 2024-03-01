@@ -1,33 +1,8 @@
-# Train and test VAE model for 100 MNIST labeled images
-python3 main.py --train-size 100 --data "MNIST" --epochs 3 --batch-size 10 --train-mode True
-python3 main.py --train-size 100 --data "MNIST" --batch-size 10
+# Train VAE on MNIST datasets
+#python3 main.py --model-type "VAE" --model-name "VAE_MNIST" --data "MNIST" --epochs 10 --batch-size 10 --train-mode True
 
-# Train and test VAE model for 600 MNIST labeled images
-python3 main.py --train-size 600 --data "MNIST" --epochs 3 --batch-size 10 --train-mode True
-python3 main.py --train-size 600 --data "MNIST" --batch-size 10
-
-## Train and test VAE model for 1000 MNIST labeled images
-#python3 main.py --train-size 1000 --data "MNIST" --epochs 30 --batch-size 10 --train True
-#python3 main.py --train-size 1000 --data "MNIST" --batch-size 10 --train False
-#
-## Train and test VAE model for 3000 MNIST labeled images
-#python3 main.py --train-size 3000 --data "MNIST" --epochs 30 --batch-size 10 --train True
-#python3 main.py --train-size 3000 --data "MNIST" --batch-size 10 --train False
-#
-## Train and test VAE model for 100 FashionMNIST labeled images
-#python3 main.py --train-size 100 --data "FashionMNIST" --epochs 30 --batch-size 10 --train True
-#python3 main.py --train-size 100 --data "FashionMNIST" --batch-size 10 --train False
-#
-## Train and test VAE model for 600 FashionMnist labeled images
-#python3 main.py --train-size 600 --data "FashionMNIST" --epochs 30 --batch-size 10 --train True
-#python3 main.py --train-size 600 --data "FashionMNIST" --batch-size 10 --train False
-#
-## Train and test VAE model for 1000 FashionMnist labeled images
-#python3 main.py --train-size 1000 --data "FashionMNIST" --epochs 30 --batch-size 10 --train True
-#python3 main.py --train-size 1000 --data "FashionMNIST" --batch-size 10 --train False
-#
-## Train and test VAE model for 3000 FashionMnist labeled images
-#python3 main.py --train-size 3000 --data "FashionMNIST" --epochs 30 --batch-size 10 --train True
-#python3 main.py --train-size 3000 --data "FashionMNIST" --batch-size 10 --train False
-
-
+# Train Classifiers on the latent representation of VAE_MNIST model
+python3 main.py --model-type "Classifier" --model-name "Classifier_100_MNIST" --train-size 100 --vae-model-name "VAE_MNIST" --data "MNIST" --train-mode True
+python3 main.py --model-type "Classifier" --model-name "Classifier_600_MNIST" --train-size 600 --vae-model-name "VAE_MNIST" --data "MNIST" --train-mode True
+python3 main.py --model-type "Classifier" --model-name "Classifier_1000_MNIST" --train-size 1000 --vae-model-name "VAE_MNIST" --data "MNIST" --train-mode True
+python3 main.py --model-type "Classifier" --model-name "Classifier_3000_MNIST" --train-size 3000 --vae-model-name "VAE_MNIST" --data "MNIST" --train-mode True

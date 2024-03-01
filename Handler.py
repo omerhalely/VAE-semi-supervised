@@ -16,7 +16,7 @@ torch.manual_seed(10)
 
 class Handler:
     def __init__(self, model_name, data_type, height, width, hidden_size, latent_size, lr, epochs, batch_size,
-                 train_size, device):
+                 train_size, device, tensorboard_enable):
         self.model_name = model_name
         self.data_type = data_type
         self.height = height
@@ -28,13 +28,17 @@ class Handler:
         self.batch_size = batch_size
         self.train_size = train_size
         self.device = device
-        self.train_dataset, self.test_dataset = load_data(self.data_type, self.train_size)
+        self.tensorboard_enable = tensorboard_enable
+        self.train_dataset_labeled, self.train_dataset_unlabeled, self.train_dataset,\
+            self.test_dataset = load_data(self.data_type,
+                                          self.train_size)
         print("Building Model...")
         self.model = VAE(hidden_size=hidden_size, latent_size=latent_size)
         self.model.to(self.device)
         self.model.apply(self.init_xavier)
         self.optimizer = optim.AdamW(self.model.parameters(), lr=self.lr)
-        self.writer = SummaryWriter(f"runs/{self.model_name}")
+        if self.tensorboard_enable:
+            self.writer = SummaryWriter(f"runs/{self.model_name}")
 
     def init_xavier(self, m):
         if type(m) == nn.Linear:
@@ -101,10 +105,10 @@ class Handler:
                 total_loss += loss.item()
         return total_loss / len(dataset)
 
-    def load_model(self):
-        print(f"Loading model {self.model_name}.")
-        model_path = os.path.join(os.getcwd(), "models", self.model_name, f"{self.model_name}.pt")
-        assert os.path.exists(model_path), f"Model {self.model_name}.pt does not exist."
+    def load_model(self, model_name):
+        print(f"Loading model {model_name}.")
+        model_path = os.path.join(os.getcwd(), "models", f"{model_name}", f"{model_name}.pt")
+        assert os.path.exists(model_path), f"Model {model_name}.pt does not exist."
 
         checkpoint = torch.load(model_path, map_location=self.device)
         self.model.load_state_dict(checkpoint["model"])
@@ -130,8 +134,6 @@ class Handler:
             test_loss = self.evaluate_model_on_dataset(self.test_dataset)
 
             self.writer.add_scalars(f"Loss/{self.model_name}", {"Train": train_loss, "Test": test_loss}, epoch)
-            # self.writer.add_scalar(f"Loss/{self.model_name}", train_loss, epoch)
-            # self.writer.add_scalar(f"Loss/{self.model_name}", test_loss, epoch)
 
             print("-" * 70)
             print(f"| End of epoch {epoch + 1} | Train Loss {train_loss:.2f} | Test Loss {test_loss:.2f} |")
@@ -149,34 +151,15 @@ class Handler:
         save_latent_representation(self.model, self.train_dataset, self.writer, 100, self.batch_size, self.latent_size,
                                    self.device)
 
-    def train_classifier(self, x, y):
-        print("Training linear SVM classifier.")
-        svm_classifier = SVC(kernel='linear')
-        svm_classifier.fit(x, y)
-        return svm_classifier
-
-    def save_classifier(self, classifier):
-        classifier_path = os.path.join(os.getcwd(), "models", self.model_name, f"{self.model_name}.pkl")
-        print(f"Saving classifier to {classifier_path}.")
-        joblib.dump(classifier, classifier_path)
-
-    def load_classifier(self):
-        classifier_path = os.path.join(os.getcwd(), "models", self.model_name, f"{self.model_name}.pkl")
-        assert os.path.exists(classifier_path), f"Classifier {model_name}.pkl does not exist."
-        print(f"Loading classifier from {classifier_path}")
-        classifier = joblib.load(classifier_path)
-        return classifier
-
-    def train(self):
-        print(f"Running on {self.device}")
-        self.train_model()
-        self.load_model()
-
-        train_means, train_vars, train_labels = get_latent_representation(self.model, self.train_dataset,
+    def train_classifier(self, VAE_model_name):
+        print(f"Training linear SVM classifier {self.model_name}.")
+        self.load_model(VAE_model_name)
+        train_means, train_vars, train_labels = get_latent_representation(self.model, self.train_dataset_labeled,
                                                                           self.batch_size, self.latent_size,
                                                                           self.device)
         train_data = np.hstack((train_means, train_vars))
-        svm_classifier = self.train_classifier(train_data, train_labels)
+        svm_classifier = SVC(kernel='linear')
+        svm_classifier.fit(train_data, train_labels)
 
         train_predictions = svm_classifier.predict(train_data)
         train_accuracy = np.sum(train_predictions == train_labels) / len(train_predictions)
@@ -192,15 +175,29 @@ class Handler:
 
         self.save_classifier(svm_classifier)
 
-    def test(self):
+    def save_classifier(self, classifier):
+        classifier_path = os.path.join(os.getcwd(), "models", self.model_name, f"{self.model_name}.pkl")
+        if not os.path.exists(os.path.join(os.getcwd(), "models", self.model_name)):
+            os.mkdir(os.path.join(os.getcwd(), "models", self.model_name))
+        print(f"Saving classifier to {classifier_path}.")
+        joblib.dump(classifier, classifier_path)
+
+    def load_classifier(self):
+        classifier_path = os.path.join(os.getcwd(), "models", self.model_name, f"{self.model_name}.pkl")
+        assert os.path.exists(classifier_path), f"Classifier {self.model_name}.pkl does not exist."
+        print(f"Loading classifier from {classifier_path}")
+        classifier = joblib.load(classifier_path)
+        return classifier
+
+    def test(self, VAE_model_name):
         print(f"Testing model {self.model_name}")
-        self.load_model()
+        self.load_model(VAE_model_name)
         svm_classifier = self.load_classifier()
 
-        train_means, train_vars, train_labels = get_latent_representation(self.model, self.train_dataset,
-                                                                          self.batch_size, self.latent_size,
+        train_means, train_vars, train_labels = get_latent_representation(self.model, self.train_dataset_labeled,
+                                                                          10, self.latent_size,
                                                                           self.device)
-        test_means, test_vars, test_labels = get_latent_representation(self.model, self.test_dataset, self.batch_size,
+        test_means, test_vars, test_labels = get_latent_representation(self.model, self.test_dataset, 10,
                                                                        self.latent_size, self.device)
         train_data = np.hstack((train_means, train_vars))
         test_data = np.hstack((test_means, test_vars))
@@ -216,15 +213,17 @@ class Handler:
 
 if __name__ == "__main__":
     train_size = 100
-    model_name = f"VAE_{train_size}"
     data_type = "MNIST"
+    model_name = "VAE_MNIST"
     height = 28
     width = 28
     hidden_size = 256
     latent_size = 10
     lr = 0.001
-    epochs = 5
+    epochs = 2
     batch_size = 10
+    vae_model_name = "VAE_MNIST"
+    tensorboard_enable = True
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     handler = Handler(model_name=model_name,
@@ -237,8 +236,10 @@ if __name__ == "__main__":
                       epochs=epochs,
                       batch_size=batch_size,
                       train_size=train_size,
-                      device=device)
+                      device=device,
+                      tensorboard_enable=tensorboard_enable)
 
-    handler.train()
-    handler.test()
+    handler.train_model()
+    handler.train_classifier()
+    handler.test(vae_model_name)
 
