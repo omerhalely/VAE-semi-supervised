@@ -103,7 +103,7 @@ class Handler:
     def load_model(self):
         print(f"Loading model {self.model_name}.")
         model_path = os.path.join(os.getcwd(), "models", self.model_name, f"{self.model_name}.pt")
-        assert os.path.exists(model_path), f"Model {self.model_name} does not exist."
+        assert os.path.exists(model_path), f"Model {self.model_name}.pt does not exist."
 
         checkpoint = torch.load(model_path, map_location=self.device)
         self.model.load_state_dict(checkpoint["model"])
@@ -159,6 +159,7 @@ class Handler:
 
     def load_classifier(self):
         classifier_path = os.path.join(os.getcwd(), "models", self.model_name, f"{self.model_name}.pkl")
+        assert os.path.exists(classifier_path), f"Classifier {model_name}.pkl does not exist."
         print(f"Loading classifier from {classifier_path}")
         classifier = joblib.load(classifier_path)
         return classifier
@@ -234,4 +235,5 @@ if __name__ == "__main__":
                       device=device)
 
     handler.train()
+    handler.test()
 

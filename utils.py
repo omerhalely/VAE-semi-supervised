@@ -7,6 +7,7 @@ import os
 
 
 def load_data(data_type, train_size):
+    assert data_type in ["MNIST", "FashionMNIST"], "Data type must be MNIST/FashionMNIST."
     transform = transforms.Compose([transforms.ToTensor()])
     if not os.path.exists(os.path.join(os.getcwd(), "data")):
         os.mkdir(os.path.join(os.getcwd(), "data"))
