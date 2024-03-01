@@ -29,6 +29,7 @@ class Handler:
         self.train_size = train_size
         self.device = device
         self.train_dataset, self.test_dataset = load_data(self.data_type, self.train_size)
+        print("Building Model...")
         self.model = VAE(hidden_size=hidden_size, latent_size=latent_size)
         self.model.to(self.device)
         self.model.apply(self.init_xavier)
@@ -128,7 +129,9 @@ class Handler:
             train_loss = self.evaluate_model_on_dataset(self.train_dataset)
             test_loss = self.evaluate_model_on_dataset(self.test_dataset)
 
-            self.writer.add_scalars("Train and Test Losses", {"Train": train_loss, "Test": test_loss}, epoch)
+            self.writer.add_scalars(f"Loss/{self.model_name}", {"Train": train_loss, "Test": test_loss}, epoch)
+            # self.writer.add_scalar(f"Loss/{self.model_name}", train_loss, epoch)
+            # self.writer.add_scalar(f"Loss/{self.model_name}", test_loss, epoch)
 
             print("-" * 70)
             print(f"| End of epoch {epoch + 1} | Train Loss {train_loss:.2f} | Test Loss {test_loss:.2f} |")
@@ -165,6 +168,7 @@ class Handler:
         return classifier
 
     def train(self):
+        print(f"Running on {self.device}")
         self.train_model()
         self.load_model()
 
@@ -189,6 +193,7 @@ class Handler:
         self.save_classifier(svm_classifier)
 
     def test(self):
+        print(f"Testing model {self.model_name}")
         self.load_model()
         svm_classifier = self.load_classifier()
 

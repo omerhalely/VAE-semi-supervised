@@ -38,18 +38,18 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--train",
+    "--train-mode",
     type=bool,
-    help="If set to True, model will be trained, else, model will be loaded and tested. Default - True",
-    default=True,
+    help="If set to True, model will be trained, else, model will be loaded and tested. Default - False",
+    default=False,
 )
 
 
 if __name__ == "__main__":
     args = parser.parse_args()
     train_size = args.train_size
-    model_name = f"VAE_{train_size}"
     data_type = args.data
+    model_name = f"VAE_{train_size}_{data_type}"
     height = 28
     width = 28
     hidden_size = 256
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     epochs = args.epochs
     batch_size = args.batch_size
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    train = args.train
+    train = args.train_mode
 
     handler = Handler(model_name=model_name,
                       data_type=data_type,
