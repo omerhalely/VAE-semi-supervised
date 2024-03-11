@@ -1,4 +1,4 @@
-# Train VAE on MNIST datasets
+# Train VAE on MNIST dataset
 python main.py --model-type "VAE" --model-name "VAE_MNIST" --data "MNIST" --epochs 10 --batch-size 10 --train-mode True
 
 # Train Classifiers on the latent representation of VAE_MNIST model
@@ -7,7 +7,7 @@ python main.py --model-type "Classifier" --model-name "Classifier_600_MNIST" --t
 python main.py --model-type "Classifier" --model-name "Classifier_1000_MNIST" --train-size 1000 --vae-model-name "VAE_MNIST" --data "MNIST" --train-mode True
 python main.py --model-type "Classifier" --model-name "Classifier_3000_MNIST" --train-size 3000 --vae-model-name "VAE_MNIST" --data "MNIST" --train-mode True
 
-# Train VAE on FashionMNIST datasets
+# Train VAE on FashionMNIST dataset
 python main.py --model-type "VAE" --model-name "VAE_FashionMNIST" --data "FashionMNIST" --epochs 10 --batch-size 10 --train-mode True
 
 # Train Classifiers on the latent representation of VAE_FashionMNIST model
